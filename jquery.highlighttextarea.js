@@ -73,9 +73,10 @@
         resizable:     false,
         id:            null,
         debug:         false,
-		  bockHighlight: "none", //Set to "block" to highlight a fixed range of characters or "withinrange" to carry out word matching within a character range
-		  fromPos: 0,
-		  toPos: 0
+		bockHighlight: "none", //"block" for fixed range, or "withinrange" for word matching within range, or "pos" for array of fromPos:toPos
+		fromPos: 		0,
+		toPos: 			0,
+		pos: 			[] // format as text array in "startPos:endPos" segments
     };
 
     /**
@@ -344,6 +345,35 @@
 				  text = topositions + "<span class=\"highlight\" style=\"background-color:"+options.color+";\">"+ highlightWithinPositions +"</span>" + afterHighlight;
                  
 			  }
+			
+			if(options.bockHighlight == "pos"){
+				textOffset = 0; //init offset
+				this.options.pos.sort(); // sort array of positions so we parse from beginning to end!
+				for(var i=0;i<this.options.pos.length;i++){
+					var p=this.options.pos[i].split(":"); // split pos by :
+					p[0] = parseInt(p[0]); // convert them to int
+					p[1] = parseInt(p[1]);
+
+					// have to use textOffset to account for added HTML below
+					topositions = text.substring(0,textOffset + p[0]-1);
+					highlightWithinPositions = text.substring(textOffset + p[0], textOffset + p[1]);
+					afterHighlight = "";
+				  if(p[1] < text.length )
+				  {
+					afterHighlight = text.substring(textOffset + p[1], text.length);
+				  }
+					// store new text for length purpose
+					newText = "<span class=\"highlight\" style=\"background-color:"+options.color+";\">"+ highlightWithinPositions +"</span>";
+
+					// figure out how much extra text was added, minus what was there
+					textOffset += newText.length - highlightWithinPositions.length;
+
+					// add to text block and do it again if there are more
+					text = topositions + "<span class=\"highlight\" style=\"background-color:"+options.color+";\">"+ highlightWithinPositions +"</span>" + afterHighlight;
+
+				}
+			}
+			
 			  else
 			  {
 				if (this.options.words.length > 0) {
