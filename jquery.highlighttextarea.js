@@ -61,6 +61,7 @@
                 }
             });
         }
+		plugin.init(); // snuck plugin.init here so each time it's called- it redoes the magic
     }
     
     /**
@@ -347,15 +348,31 @@
 			  }
 			
 			if(options.bockHighlight == "pos"){
+				/*
+				example usage as options when calling:
+				
+				bockHighlight:'pos',
+				pos:["150:165:#55ff55:title text 1","45:105:#ffcc55:title text 2"],
+				
+				*/
+				
+				
 				textOffset = 0; //init offset
-				this.options.pos.sort(); // sort array of positions so we parse from beginning to end!
+				
+				// needed to sort by first posStart
+				this.options.pos.sort(function(a,b){
+					var p=a.split(":");
+					var o=b.split(":");
+					return p[0] - o[0]	
+					});
+					
 				for(var i=0;i<this.options.pos.length;i++){
 					var p=this.options.pos[i].split(":"); // split pos by :
 					p[0] = parseInt(p[0]); // convert them to int
 					p[1] = parseInt(p[1]);
-
+					
 					// have to use textOffset to account for added HTML below
-					topositions = text.substring(0,textOffset + p[0]-1);
+					topositions = text.substring(0,textOffset + p[0]);
 					highlightWithinPositions = text.substring(textOffset + p[0], textOffset + p[1]);
 					afterHighlight = "";
 				  if(p[1] < text.length )
@@ -363,17 +380,16 @@
 					afterHighlight = text.substring(textOffset + p[1], text.length);
 				  }
 					// store new text for length purpose
-					newText = "<span class=\"highlight\" style=\"background-color:"+options.color+";\">"+ highlightWithinPositions +"</span>";
-
+					newText = "<span class=\"highlight\" style=\"background-color:"+p[2]+";\" title=\""+p[3]+"\">"+ highlightWithinPositions +"</span>";
+					
 					// figure out how much extra text was added, minus what was there
 					textOffset += newText.length - highlightWithinPositions.length;
-
+					
 					// add to text block and do it again if there are more
-					text = topositions + "<span class=\"highlight\" style=\"background-color:"+options.color+";\">"+ highlightWithinPositions +"</span>" + afterHighlight;
-
+					text = topositions + newText + afterHighlight;
+					
 				}
 			}
-			
 			  else
 			  {
 				if (this.options.words.length > 0) {
@@ -405,7 +421,6 @@
 					}
 				}
 			  }
-            
             this.$highlighter.html(text);
             this.updateSizePosition();
         }
@@ -432,7 +447,7 @@
               (this.$textarea[0].clientHeight < this.$textarea[0].scrollHeight && this.$textarea.css('overflow') != 'hidden' && this.$textarea.css('overflow-y') != 'hidden')
               || this.$textarea.css('overflow') == 'scroll' || this.$textarea.css('overflow-y') == 'scroll'
             ) {
-                var padding = 18;
+                var padding = 12;
             }
             else {
                 var padding = 5;
